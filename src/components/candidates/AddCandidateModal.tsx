@@ -3,6 +3,7 @@ import { useATS } from '../../context/ATSContext';
 import { Modal } from '../common/Modal';
 import { CandidateSource, CandidateStage, NewCandidateInput } from '../../types/ats';
 import { UserPlus, AlertCircle } from 'lucide-react';
+import { cloudeeEmit } from '../../mascot/cloudeeEvents';
 
 const COMMON_ROLES = [
   'Software Engineer',
@@ -88,7 +89,10 @@ export const AddCandidateModal: React.FC = () => {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!validate()) return;
+    if (!validate()) {
+      cloudeeEmit('CANDIDATE_ADD_FAIL', { data: { error: 'A couple of details need your attention.' } });
+      return;
+    }
 
     setIsSubmitting(true);
     setSubmitError(null);

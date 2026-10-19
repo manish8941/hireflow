@@ -27,6 +27,23 @@ async function setReactInput(page, selector, value) {
   await new Promise(r => setTimeout(r, 250));
 }
 
+async function navigateToTab(page, tabName) {
+  await page.evaluate((name) => {
+    const trigger = document.querySelector('.dynamic-island-trigger');
+    if (trigger && !document.querySelector('.dynamic-island-menu')) {
+      trigger.click();
+    }
+  }, tabName);
+  await new Promise(r => setTimeout(r, 200));
+  await page.evaluate((name) => {
+    const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes(name));
+    if (navBtn) {
+      navBtn.click();
+    }
+  }, tabName);
+  await new Promise(r => setTimeout(r, 350));
+}
+
 async function runAudit() {
   console.log('--- Starting HireFlow Complete E2E Browser Test ---');
   const browser = await puppeteer.launch({
@@ -98,10 +115,123 @@ async function runAudit() {
       );
     }
 
+    // 1.3 Verify Permanent Sidebar Removed & Workspace Expands Across Viewport
+    const sidebarRemoved = await page.evaluate(() => {
+      const sb = document.querySelector('.app-sidebar');
+      const isHidden = !sb || window.getComputedStyle(sb).display === 'none';
+      const main = document.querySelector('.app-main');
+      const mainWidth = main ? main.getBoundingClientRect().width : 0;
+      return isHidden && mainWidth >= 1400;
+    });
+
+    if (sidebarRemoved) {
+      recordResult(
+        '1.3 Permanent Desktop Sidebar Removed & Full-Width Workspace',
+        'Sidebar is removed from DOM layout; app-main occupies 100% viewport width',
+        'Sidebar hidden/absent, app-main width >= 1400px',
+        'PASS',
+        'Full desktop workspace achieved without persistent sidebar'
+      );
+    } else {
+      recordResult(
+        '1.3 Permanent Desktop Sidebar Removed & Full-Width Workspace',
+        'Sidebar is removed',
+        'Sidebar still visible or occupying width',
+        'FAIL',
+        'Sidebar removal check failed'
+      );
+    }
+
+    // 1.4 Verify Floating Dynamic Island Collapsed & Expanded Navigation States
+    const dynamicIslandWorks = await page.evaluate(async () => {
+      const surface = document.querySelector('.dynamic-island-surface');
+      const trigger = document.querySelector('.dynamic-island-trigger');
+      if (!surface || !trigger) return { success: false, reason: 'Dynamic Island element not found' };
+
+      // Trigger expansion
+      trigger.click();
+      await new Promise(r => setTimeout(r, 200));
+      const menu = document.querySelector('.dynamic-island-menu');
+      const menuItems = menu ? menu.querySelectorAll('.dynamic-island-menu-item').length : 0;
+
+      // Close with Escape key
+      window.dispatchEvent(new KeyboardEvent('keydown', { key: 'Escape', bubbles: true }));
+      await new Promise(r => setTimeout(r, 200));
+      const closedMenu = document.querySelector('.dynamic-island-menu');
+
+      return {
+        success: menuItems === 4 && closedMenu === null,
+        menuItems,
+        closedOnEsc: closedMenu === null,
+      };
+    });
+
+    if (dynamicIslandWorks.success) {
+      recordResult(
+        '1.4 Floating Dynamic Island Control & Smooth Menu Unfolding',
+        'Dynamic Island expands into 4-item glass popover on Menu click and closes on Escape',
+        `Items: ${dynamicIslandWorks.menuItems}, closed on Esc: ${dynamicIslandWorks.closedOnEsc}`,
+        'PASS',
+        'macOS Tahoe Dynamic Island interaction validated'
+      );
+    } else {
+      recordResult(
+        '1.4 Floating Dynamic Island Control & Smooth Menu Unfolding',
+        'Dynamic Island unfolds and closes',
+        JSON.stringify(dynamicIslandWorks),
+        'FAIL',
+        'Dynamic Island verification failed'
+      );
+    }
+
+    // 1.5 Verify Light & Dark Theme Toggle inside Dynamic Island
+    const themeToggleWorks = await page.evaluate(async () => {
+      const themeBtn = document.querySelector('.dynamic-island-theme-btn');
+      if (!themeBtn) return { success: false, reason: 'Theme button not found' };
+
+      const initialTheme = document.documentElement.getAttribute('data-theme') || 'dark';
+      // Toggle to alternate theme
+      themeBtn.click();
+      await new Promise(r => setTimeout(r, 200));
+      const nextTheme = document.documentElement.getAttribute('data-theme');
+      const stored = localStorage.getItem('hireflow_theme');
+
+      // Toggle back to initial theme
+      themeBtn.click();
+      await new Promise(r => setTimeout(r, 200));
+      const restoredTheme = document.documentElement.getAttribute('data-theme');
+
+      return {
+        success: nextTheme !== initialTheme && stored === nextTheme && restoredTheme === initialTheme,
+        initialTheme,
+        nextTheme,
+        stored,
+        restoredTheme,
+      };
+    });
+
+    if (themeToggleWorks.success) {
+      recordResult(
+        '1.5 Light and Dark Theme Toggle with LocalStorage Persistence',
+        'Theme switches cleanly between dark and light, updates data-theme, and persists in localStorage',
+        `Switched from ${themeToggleWorks.initialTheme} to ${themeToggleWorks.nextTheme} (stored: ${themeToggleWorks.stored})`,
+        'PASS',
+        'Persistent dual-theme system validated'
+      );
+    } else {
+      recordResult(
+        '1.5 Light and Dark Theme Toggle with LocalStorage Persistence',
+        'Theme switches and persists',
+        JSON.stringify(themeToggleWorks),
+        'FAIL',
+        'Theme switch verification failed'
+      );
+    }
+
     // Verify 0 Initial Console Errors
     if (consoleErrors.length === 0) {
       recordResult(
-        '1.3 Browser Console Health',
+        '1.6 Browser Console Health',
         '0 runtime console errors or uncaught exceptions',
         `Console errors count: ${consoleErrors.length}`,
         'PASS',
@@ -109,7 +239,7 @@ async function runAudit() {
       );
     } else {
       recordResult(
-        '1.3 Browser Console Health',
+        '1.6 Browser Console Health',
         '0 runtime console errors or uncaught exceptions',
         `Errors: ${consoleErrors.join(' | ')}`,
         'FAIL',
@@ -285,11 +415,8 @@ async function runAudit() {
     // 4. SEARCH AND FILTERING
     // ==========================================
     // Navigate to Candidates Directory Tab
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Candidates'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
+    await navigateToTab(page, 'Candidates');
+
 
     // Search by Full Name
     await setReactInput(page, '.page-container input[type="text"]', 'QA Test Candidate');
@@ -459,11 +586,8 @@ async function runAudit() {
     }
 
     // Verify Candidate in Kanban Pipeline Board
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Hiring Pipeline'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 350));
+    await navigateToTab(page, 'Hiring Pipeline');
+
 
     const inHiredKanbanColumn = await page.evaluate(() => {
       const cols = Array.from(document.querySelectorAll('.kanban-column'));
@@ -487,11 +611,8 @@ async function runAudit() {
     // 6. CANDIDATE DELETION WITH CONFIRMATION
     // ==========================================
     // Go back to Candidates tab
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Candidates'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
+    await navigateToTab(page, 'Candidates');
+
 
     // Open action menu for QA Test Candidate
     await page.evaluate(() => {
@@ -617,11 +738,8 @@ async function runAudit() {
     await new Promise(r => setTimeout(r, 400));
 
     // Make sure we are on Candidates tab
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Candidates'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
+    await navigateToTab(page, 'Candidates');
+
 
     // Verify candidate is still present after refresh
     const persistedAfterRefresh = await page.evaluate(() => {
@@ -671,11 +789,8 @@ async function runAudit() {
     await new Promise(r => setTimeout(r, 400));
 
     // Go to candidates tab
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Candidates'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
+    await navigateToTab(page, 'Candidates');
+
 
     const editPersisted = await page.evaluate(() => {
       const rows = Array.from(document.querySelectorAll('.data-table tbody tr'));
@@ -748,21 +863,21 @@ async function runAudit() {
     await page.setViewport({ width: 375, height: 812 });
     await new Promise(r => setTimeout(r, 300));
 
-    const hamburgerVisible = await page.evaluate(() => {
-      const btn = document.querySelector('.mobile-menu-btn');
-      return btn && window.getComputedStyle(btn).display !== 'none';
+    const dynamicIslandMobileVisible = await page.evaluate(() => {
+      const pill = document.querySelector('.dynamic-island-surface');
+      return pill && window.getComputedStyle(pill).display !== 'none';
     });
 
-    if (hamburgerVisible) {
+    if (dynamicIslandMobileVisible) {
       recordResult(
         '8.2 Mobile Viewport Responsiveness (375px)',
-        'Sidebar collapses into mobile drawer and hamburger menu button becomes visible',
-        'Hamburger button visible at 375px width',
+        'macOS Dynamic Island adapts and remains floating and accessible at 375px mobile viewport',
+        'Dynamic Island visible at 375px width',
         'PASS',
         'Responsive mobile layout responsive breakpoint triggered'
       );
     } else {
-      recordResult('8.2 Mobile Viewport Responsiveness', 'Hamburger visible', 'Hamburger hidden', 'FAIL', 'Mobile breakpoint issue');
+      recordResult('8.2 Mobile Viewport Responsiveness', 'Dynamic Island visible', 'Dynamic Island hidden', 'FAIL', 'Mobile breakpoint issue');
     }
 
     // Restore Desktop Viewport
@@ -772,11 +887,8 @@ async function runAudit() {
     // 10. CLEAN UP DATA & VERIFY BASELINE
     // ==========================================
     // Reset to candidates tab to check full list
-    await page.evaluate(() => {
-      const navBtn = Array.from(document.querySelectorAll('.nav-item-btn')).find(b => b.textContent.includes('Candidates'));
-      if (navBtn) navBtn.click();
-    });
-    await new Promise(r => setTimeout(r, 300));
+    await navigateToTab(page, 'Candidates');
+
 
     await page.evaluate(() => {
       const resetBtn = Array.from(document.querySelectorAll('button')).find(b => b.textContent.includes('Reset Demo Data'));

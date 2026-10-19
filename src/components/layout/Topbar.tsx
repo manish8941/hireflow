@@ -1,106 +1,46 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useATS } from '../../context/ATSContext';
-import { Search, Bell, Menu, Plus } from 'lucide-react';
-import { NotificationDropdown } from '../notifications/NotificationDropdown';
+import { DynamicIsland } from '../navigation/DynamicIsland';
+import { Plus, User } from 'lucide-react';
 
-interface TopbarProps {
-  onOpenMobile: () => void;
-}
-
-export const Topbar: React.FC<TopbarProps> = ({ onOpenMobile }) => {
-  const { 
-    activeTab, 
-    searchQuery, 
-    setSearchQuery, 
-    setIsAddModalOpen,
-    notifications,
-  } = useATS();
-
-  const [isNotifOpen, setIsNotifOpen] = useState(false);
-  const unreadCount = notifications.filter(n => !n.read).length;
-
-  const getPageMeta = () => {
-    switch (activeTab) {
-      case 'dashboard':
-        return { title: 'Dashboard', subtitle: 'Overview & Metrics' };
-      case 'candidates':
-        return { title: 'Candidates', subtitle: 'Candidate Directory' };
-      case 'pipeline':
-        return { title: 'Hiring Pipeline', subtitle: 'Kanban Workflow' };
-      case 'settings':
-        return { title: 'Settings', subtitle: 'ATS Configuration' };
-      default:
-        return { title: 'Dashboard', subtitle: 'Overview' };
-    }
-  };
-
-  const { title, subtitle } = getPageMeta();
+export const Topbar: React.FC = () => {
+  const { setIsAddModalOpen, setActiveTab } = useATS();
 
   return (
-    <header className="app-topbar">
-      <div className="topbar-left">
-        <button
-          type="button"
-          className="mobile-menu-btn"
-          onClick={onOpenMobile}
-          aria-label="Open navigation menu"
-        >
-          <Menu size={18} />
-        </button>
-
-        <div className="topbar-page-title-box">
-          <span className="topbar-title">{title}</span>
-          <span className="topbar-subtitle">• {subtitle}</span>
+    <header className="editorial-floating-header">
+      {/* Top-Left: Minimal Brand Mark / Monogram inspired by reference screenshot */}
+      <div className="editorial-brand-container" onClick={() => setActiveTab('dashboard')} title="HireFlow ATS">
+        <div className="editorial-monogram">
+          <svg width="22" height="22" viewBox="0 0 24 24" fill="currentColor">
+            {/* Minimalist geometric architectural monogram */}
+            <rect x="2" y="3" width="7" height="18" rx="2" />
+            <rect x="11" y="3" width="11" height="5.5" rx="1.5" />
+            <rect x="11" y="10.5" width="8" height="5.5" rx="1.5" />
+            <circle cx="13" cy="19.5" r="2" />
+          </svg>
         </div>
+        <span className="editorial-brand-name">HireFlow</span>
       </div>
 
-      <div className="topbar-right">
-        {/* Search Input */}
-        <div className="topbar-search-box">
-          <Search size={14} className="topbar-search-icon" />
-          <input
-            type="text"
-            className="topbar-search-input"
-            placeholder="Search candidates, roles..."
-            value={searchQuery}
-            onChange={e => setSearchQuery(e.target.value)}
-          />
-          <span className="topbar-search-shortcut">⌘K</span>
-        </div>
+      {/* Top-Center: Independent Floating Dynamic Island Capsule */}
+      <div className="editorial-island-slot">
+        <DynamicIsland />
+      </div>
 
-        {/* Global Add Candidate Button in Topbar */}
+      {/* Top-Right: Minimal Restrained Controls (Avatar circle + subtle primary action) */}
+      <div className="editorial-top-actions">
         <button
           type="button"
-          className="btn btn-primary"
-          style={{ height: '32px', padding: '0 10px', fontSize: '12px' }}
+          className="editorial-action-btn"
           onClick={() => setIsAddModalOpen(true)}
+          title="Add new candidate"
         >
           <Plus size={14} />
-          <span style={{ display: 'inline' }}>Add Candidate</span>
+          <span>Add Candidate</span>
         </button>
 
-        {/* Notifications */}
-        <div style={{ position: 'relative' }}>
-          <button
-            type="button"
-            className="icon-btn"
-            onClick={() => setIsNotifOpen(prev => !prev)}
-            aria-label="View notifications"
-          >
-            <Bell size={17} />
-            {unreadCount > 0 && <span className="unread-dot" />}
-          </button>
-
-          <NotificationDropdown
-            isOpen={isNotifOpen}
-            onClose={() => setIsNotifOpen(false)}
-          />
-        </div>
-
-        {/* User Profile Pill */}
-        <div className="user-menu-pill" title="Alex Rivera (Recruiting Lead)">
-          <div className="user-avatar-circle">AR</div>
-          <span className="user-meta-name">Alex R.</span>
+        <div className="editorial-avatar-circle" title="Alex Rivera (Recruiting Lead)">
+          <User size={14} />
         </div>
       </div>
     </header>

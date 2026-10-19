@@ -58,8 +58,9 @@ export const PipelinePage: React.FC = () => {
                 alignItems: 'center',
                 gap: '6px',
                 padding: '4px 10px',
-                backgroundColor: 'var(--indigo-50)',
-                color: 'var(--indigo-700)',
+                background: 'var(--accent-soft)',
+                color: 'var(--accent)',
+                border: '1px solid rgba(84, 120, 184, 0.22)',
                 borderRadius: 'var(--radius-sm)',
                 fontSize: '12px',
                 fontWeight: 500,
@@ -77,7 +78,7 @@ export const PipelinePage: React.FC = () => {
                   padding: '2px',
                   display: 'flex',
                   alignItems: 'center',
-                  color: 'var(--indigo-700)',
+                  color: 'var(--accent)',
                 }}
                 aria-label="Clear search filter"
               >
@@ -180,7 +181,7 @@ export const PipelinePage: React.FC = () => {
                               height: '24px',
                               padding: '0 6px',
                               fontSize: '11px',
-                              color: 'var(--indigo-600)',
+                              color: 'var(--accent)',
                             }}
                             title={`Advance to ${STAGE_CONFIG[next].label}`}
                             onClick={async e => {

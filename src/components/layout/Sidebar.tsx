@@ -60,26 +60,37 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
       )}
 
       <aside className={`app-sidebar ${mobileOpen ? 'mobile-open' : ''}`}>
-        {/* Brand Header */}
+        {/* Brand Header with macOS Traffic Lights */}
         <div className="sidebar-header">
-          <div className="brand-logo-mark">
-            <Zap size={16} fill="#ffffff" />
-          </div>
-          <div className="brand-text">
-            <span>HireFlow</span>
-            <span className="brand-badge">ATS</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+            <div className="macos-window-dots" title="macOS Window Controls">
+              <span className="macos-dot close" />
+              <span className="macos-dot minimize" />
+              <span className="macos-dot zoom" />
+            </div>
+            <div className="brand-wrapper">
+              <div className="brand-logo-mark">
+                <Zap size={14} fill="#ffffff" />
+              </div>
+              <div className="brand-text">
+                <span>HireFlow</span>
+                <span className="brand-badge">ATS</span>
+              </div>
+            </div>
           </div>
 
           {/* Mobile close button */}
-          <button
-            type="button"
-            className="icon-btn mobile-menu-btn"
-            style={{ marginLeft: 'auto' }}
-            onClick={onCloseMobile}
-            aria-label="Close sidebar"
-          >
-            <X size={18} />
-          </button>
+          {mobileOpen && (
+            <button
+              type="button"
+              className="icon-btn mobile-menu-btn"
+              style={{ marginLeft: 'auto' }}
+              onClick={onCloseMobile}
+              aria-label="Close sidebar"
+            >
+              <X size={18} />
+            </button>
+          )}
         </div>
 
         {/* Sidebar Nav Content */}
@@ -116,12 +127,12 @@ export const Sidebar: React.FC<SidebarProps> = ({ mobileOpen, onCloseMobile }) =
               marginTop: 'auto',
               padding: '12px',
               borderRadius: 'var(--radius-sm)',
-              backgroundColor: 'var(--bg-subtle)',
-              border: '1px solid var(--border-subtle)',
+              background: 'var(--surface-glass)',
+              border: '1px solid var(--border-glass)',
             }}
           >
             <div style={{ display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '4px' }}>
-              <Sparkles size={14} color="var(--indigo-600)" />
+              <Sparkles size={14} color="var(--accent)" />
               <span style={{ fontSize: '11.5px', fontWeight: 600, color: 'var(--text-primary)' }}>
                 Q4 Engineering Hiring
               </span>

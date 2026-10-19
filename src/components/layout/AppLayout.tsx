@@ -1,20 +1,21 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { useATS } from '../../context/ATSContext';
-import { Sidebar } from './Sidebar';
 import { Topbar } from './Topbar';
 import { DemoBanner } from '../common/DemoBanner';
 import { AddCandidateModal } from '../candidates/AddCandidateModal';
 import { EditCandidateModal } from '../candidates/EditCandidateModal';
 import { CandidateDetailModal } from '../candidates/CandidateDetailModal';
 import { ConfirmDialog } from '../common/ConfirmDialog';
+import { LiquidPurpleCanvas } from '../common/LiquidPurpleCanvas';
+import { CloudeeWidget } from '../../mascot/CloudeeWidget';
 
 interface AppLayoutProps {
   children: React.ReactNode;
 }
 
 export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
-  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const { 
+    activeTab,
     candidateToDelete, 
     setCandidateToDelete, 
     deleteCandidate,
@@ -31,15 +32,18 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
 
   return (
     <div className="app-shell">
-      <Sidebar
-        mobileOpen={mobileSidebarOpen}
-        onCloseMobile={() => setMobileSidebarOpen(false)}
-      />
+      {/* Immersive interactive atmospheric purple liquid background */}
+      <LiquidPurpleCanvas />
 
+      {/* Main application workspace - full viewport width, no persistent sidebar */}
       <div className="app-main">
-        <Topbar onOpenMobile={() => setMobileSidebarOpen(true)} />
+        <Topbar />
         <DemoBanner />
-        {children}
+        
+        {/* Fluid page transition wrapper */}
+        <main className="app-page-transition-wrapper" key={activeTab}>
+          {children}
+        </main>
       </div>
 
       {/* Global Modals & Dialogs */}
@@ -51,7 +55,7 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
       />
       <CandidateDetailModal />
       
-      {/* Destructive Action Confirmation */}
+      {/* Destructive Action Confirmation Dialog */}
       <ConfirmDialog
         isOpen={Boolean(candidateToDelete)}
         title="Delete Candidate"
@@ -61,6 +65,9 @@ export const AppLayout: React.FC<AppLayoutProps> = ({ children }) => {
         onConfirm={handleConfirmDelete}
         onCancel={() => setCandidateToDelete(null)}
       />
+
+      {/* Cloudee Interactive Floating AI Mascot */}
+      <CloudeeWidget />
     </div>
   );
 };

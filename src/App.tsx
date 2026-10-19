@@ -1,5 +1,6 @@
 import React, { useEffect } from 'react';
 import { ATSProvider, useATS } from './context/ATSContext';
+import { ThemeProvider } from './context/ThemeContext';
 import { AppLayout } from './components/layout/AppLayout';
 import { DashboardPage } from './pages/DashboardPage';
 import { CandidatesPage } from './pages/CandidatesPage';
@@ -9,10 +10,9 @@ import { SettingsPage } from './pages/SettingsPage';
 const MainContent: React.FC = () => {
   const { activeTab, setIsAddModalOpen } = useATS();
 
-  // Keyboard shortcut listener: Cmd/Ctrl + K to focus search, C to open Add Candidate
+  // Global hotkeys: ⌘K to focus search, C to open Add Candidate
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      // If typing in an input, textarea, or select, don't trigger global hotkeys
       const target = e.target as HTMLElement;
       if (
         target.tagName === 'INPUT' || 
@@ -58,9 +58,11 @@ const MainContent: React.FC = () => {
 
 export function App() {
   return (
-    <ATSProvider>
-      <MainContent />
-    </ATSProvider>
+    <ThemeProvider>
+      <ATSProvider>
+        <MainContent />
+      </ATSProvider>
+    </ThemeProvider>
   );
 }
 

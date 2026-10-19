@@ -40,15 +40,24 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
     rejected: 'applied',
   };
 
-  // Close menu on outside click
+  // Close menu on outside click or Escape
   useEffect(() => {
     const handleClickOutside = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
         setActiveMenuId(null);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveMenuId(null);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const formatDate = (dateStr: string) => {
@@ -85,7 +94,7 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
           <h3 className="panel-title">
             Recent Candidates
             {searchQuery && (
-              <span style={{ fontSize: '11.5px', fontWeight: 400, color: 'var(--indigo-600)', marginLeft: '6px' }}>
+              <span style={{ fontSize: '11.5px', fontWeight: 400, color: 'var(--accent)', marginLeft: '6px' }}>
                 (matching &ldquo;{searchQuery}&rdquo;)
               </span>
             )}
@@ -125,9 +134,10 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
               </tr>
             </thead>
             <tbody>
-              {displayCandidates.map(cand => {
+              {displayCandidates.map((cand, idx) => {
                 const isMenuOpen = activeMenuId === cand.id;
                 const nextStage = nextStageMap[cand.stage];
+                const isNearBottom = idx >= displayCandidates.length - 2;
 
                 return (
                   <tr key={cand.id}>
@@ -165,21 +175,21 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
 
                     <td style={{ textAlign: 'right' }}>
                       <div 
-                        className="action-menu-container" 
+                        className={`action-menu-container ${isMenuOpen ? 'is-open' : ''}`}
                         ref={isMenuOpen ? menuRef : undefined}
                       >
                         <button
                           type="button"
-                          className="icon-btn"
-                          style={{ width: '28px', height: '28px', marginLeft: 'auto' }}
+                          className={`action-trigger-btn ${isMenuOpen ? 'is-active' : ''}`}
                           onClick={() => setActiveMenuId(isMenuOpen ? null : cand.id)}
-                          aria-label="Candidate actions"
+                          aria-label={`Candidate actions for ${cand.name}`}
+                          aria-expanded={isMenuOpen}
                         >
-                          <MoreHorizontal size={16} />
+                          <MoreHorizontal size={15} />
                         </button>
 
                         {isMenuOpen && (
-                          <div className="action-menu-dropdown">
+                          <div className={`action-menu-dropdown ${isNearBottom ? 'pop-upward' : 'pop-downward'}`}>
                             <button
                               type="button"
                               className="action-menu-item"
@@ -189,7 +199,7 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
                               }}
                             >
                               <Eye size={14} />
-                              View Profile
+                              <span>View Profile</span>
                             </button>
 
                             <button
@@ -198,7 +208,7 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
                               onClick={() => handleEdit(cand)}
                             >
                               <Edit3 size={14} />
-                              Edit Details
+                              <span>Edit Details</span>
                             </button>
 
                             {nextStage && (
@@ -209,9 +219,11 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
                                 onClick={() => handleAdvanceStage(cand)}
                               >
                                 <ArrowRightCircle size={14} />
-                                Advance to {nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}
+                                <span>Advance to {nextStage.charAt(0).toUpperCase() + nextStage.slice(1)}</span>
                               </button>
                             )}
+
+                            <div className="action-menu-divider" />
 
                             <button
                               type="button"
@@ -219,7 +231,7 @@ export const RecentCandidatesTable: React.FC<RecentCandidatesTableProps> = ({
                               onClick={() => handleDelete(cand)}
                             >
                               <Trash2 size={14} />
-                              Delete Candidate
+                              <span>Delete Candidate</span>
                             </button>
                           </div>
                         )}

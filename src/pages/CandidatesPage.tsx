@@ -43,8 +43,17 @@ export const CandidatesPage: React.FC = () => {
         setActiveMenuId(null);
       }
     };
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        setActiveMenuId(null);
+      }
+    };
     document.addEventListener('mousedown', handleClickOutside);
-    return () => document.removeEventListener('mousedown', handleClickOutside);
+    document.addEventListener('keydown', handleKeyDown);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+      document.removeEventListener('keydown', handleKeyDown);
+    };
   }, []);
 
   const stageTabs = [
@@ -107,11 +116,13 @@ export const CandidatesPage: React.FC = () => {
           display: 'flex',
           flexDirection: 'column',
           gap: '12px',
-          backgroundColor: '#ffffff',
+          background: 'var(--surface-glass)',
+          backdropFilter: 'blur(20px) saturate(140%)',
+          WebkitBackdropFilter: 'blur(20px) saturate(140%)',
           padding: '12px 16px',
           borderRadius: 'var(--radius-md)',
-          border: '1px solid var(--border-subtle)',
-          boxShadow: 'var(--shadow-xs)',
+          border: '1px solid var(--border-glass)',
+          boxShadow: 'var(--shadow-glass)',
         }}
       >
         {/* Stage Filter Buttons */}
@@ -138,10 +149,11 @@ export const CandidatesPage: React.FC = () => {
                   borderRadius: 'var(--radius-sm)',
                   fontSize: '12.5px',
                   fontWeight: isSelected ? 600 : 500,
-                  backgroundColor: isSelected ? 'var(--indigo-50)' : 'transparent',
-                  color: isSelected ? 'var(--indigo-600)' : 'var(--text-secondary)',
+                  backgroundColor: isSelected ? 'var(--accent-soft)' : 'transparent',
+                  color: isSelected ? 'var(--text-primary)' : 'var(--text-secondary)',
                   border: '1px solid',
-                  borderColor: isSelected ? 'var(--indigo-100)' : 'transparent',
+                  borderColor: isSelected ? 'var(--accent)' : 'transparent',
+                  boxShadow: isSelected ? 'var(--shadow-glass)' : 'none',
                   cursor: 'pointer',
                   whiteSpace: 'nowrap',
                   transition: 'all var(--transition-fast)',
@@ -153,9 +165,10 @@ export const CandidatesPage: React.FC = () => {
                     fontSize: '11px',
                     padding: '1px 6px',
                     borderRadius: '10px',
-                    backgroundColor: isSelected ? '#ffffff' : 'var(--bg-subtle)',
-                    color: isSelected ? 'var(--indigo-600)' : 'var(--text-muted)',
+                    backgroundColor: isSelected ? 'var(--accent-soft)' : 'var(--surface-glass-nested)',
+                    color: isSelected ? 'var(--text-primary)' : 'var(--text-muted)',
                     fontWeight: 600,
+                    border: '1px solid var(--border-glass)',
                   }}
                 >
                   {tab.count}
@@ -174,7 +187,7 @@ export const CandidatesPage: React.FC = () => {
             gap: '12px',
             flexWrap: 'wrap',
             paddingTop: '8px',
-            borderTop: '1px solid var(--border-light)',
+            borderTop: '1px solid var(--border-glass-subtle)',
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: '8px', flex: 1, minWidth: '240px' }}>
@@ -201,8 +214,8 @@ export const CandidatesPage: React.FC = () => {
                   paddingRight: '12px',
                   fontSize: '12.5px',
                   borderRadius: 'var(--radius-sm)',
-                  border: '1px solid var(--border-subtle)',
-                  backgroundColor: 'var(--bg-subtle)',
+                  border: '1px solid var(--border-glass)',
+                  backgroundColor: 'var(--surface-glass-nested)',
                   color: 'var(--text-primary)',
                   outline: 'none',
                 }}
@@ -231,9 +244,9 @@ export const CandidatesPage: React.FC = () => {
                 padding: '0 10px',
                 fontSize: '12px',
                 borderRadius: 'var(--radius-sm)',
-                border: '1px solid var(--border-subtle)',
-                backgroundColor: '#ffffff',
-                color: 'var(--text-secondary)',
+                border: '1px solid var(--border-glass)',
+                backgroundColor: 'var(--surface-glass-nested)',
+                color: 'var(--text-primary)',
                 outline: 'none',
               }}
             >
@@ -279,9 +292,10 @@ export const CandidatesPage: React.FC = () => {
                 </tr>
               </thead>
               <tbody>
-                {displayedList.map(cand => {
+                {displayedList.map((cand, idx) => {
                   const isMenuOpen = activeMenuId === cand.id;
                   const nextStage = nextStageMap[cand.stage];
+                  const isNearBottom = idx >= displayedList.length - 2;
 
                   return (
                     <tr key={cand.id}>
@@ -329,21 +343,21 @@ export const CandidatesPage: React.FC = () => {
 
                       <td style={{ textAlign: 'right' }}>
                         <div 
-                          className="action-menu-container"
+                          className={`action-menu-container ${isMenuOpen ? 'is-open' : ''}`}
                           ref={isMenuOpen ? menuRef : undefined}
                         >
                           <button
                             type="button"
-                            className="icon-btn"
-                            style={{ width: '28px', height: '28px', marginLeft: 'auto' }}
+                            className={`action-trigger-btn ${isMenuOpen ? 'is-active' : ''}`}
                             onClick={() => setActiveMenuId(isMenuOpen ? null : cand.id)}
-                            aria-label="Candidate actions"
+                            aria-label={`Candidate actions for ${cand.name}`}
+                            aria-expanded={isMenuOpen}
                           >
-                            <MoreHorizontal size={16} />
+                            <MoreHorizontal size={15} />
                           </button>
 
                           {isMenuOpen && (
-                            <div className="action-menu-dropdown">
+                            <div className={`action-menu-dropdown ${isNearBottom ? 'pop-upward' : 'pop-downward'}`}>
                               <button
                                 type="button"
                                 className="action-menu-item"
@@ -353,7 +367,7 @@ export const CandidatesPage: React.FC = () => {
                                 }}
                               >
                                 <Eye size={14} />
-                                View Profile
+                                <span>View Profile</span>
                               </button>
 
                               <button
@@ -365,7 +379,7 @@ export const CandidatesPage: React.FC = () => {
                                 }}
                               >
                                 <Edit3 size={14} />
-                                Edit Details
+                                <span>Edit Details</span>
                               </button>
 
                               {nextStage && (
@@ -379,9 +393,11 @@ export const CandidatesPage: React.FC = () => {
                                   }}
                                 >
                                   <ArrowRightCircle size={14} />
-                                  Advance to {STAGE_CONFIG[nextStage]?.label}
+                                  <span>Advance to {STAGE_CONFIG[nextStage]?.label}</span>
                                 </button>
                               )}
+
+                              <div className="action-menu-divider" />
 
                               <button
                                 type="button"
@@ -392,7 +408,7 @@ export const CandidatesPage: React.FC = () => {
                                 }}
                               >
                                 <Trash2 size={14} />
-                                Delete
+                                <span>Delete Candidate</span>
                               </button>
                             </div>
                           )}

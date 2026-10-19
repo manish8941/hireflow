@@ -8,10 +8,17 @@ import {
   Check, 
   Plus,
   RotateCcw,
-  Database
+  Database,
+  Sun,
+  Moon,
+  Sparkles,
 } from 'lucide-react';
 import { useATS } from '../context/ATSContext';
+import { useTheme } from '../context/ThemeContext';
 import { Modal } from '../components/common/Modal';
+import { CloudeeToggle } from '../mascot/CloudeeToggle';
+import { useCloudeeEnabled } from '../mascot/cloudeeStorage';
+import { cloudeeEmit } from '../mascot/cloudeeEvents';
 
 interface TeamMember {
   id: string;
@@ -43,6 +50,8 @@ const DEFAULT_TEAM: TeamMember[] = [
 
 export const SettingsPage: React.FC = () => {
   const { resetDemoData, storageMode, isSaving } = useATS();
+  const { theme, setTheme } = useTheme();
+  const [cloudeeEnabled, setCloudeeEnabled] = useCloudeeEnabled();
   const [activeTab, setActiveTab] = useState<'general' | 'team' | 'pipeline' | 'notifications'>('general');
   const [savedSuccess, setSavedSuccess] = useState(false);
 
@@ -132,14 +141,17 @@ export const SettingsPage: React.FC = () => {
         {/* Settings Navigation Menu */}
         <div
           style={{
-            backgroundColor: '#ffffff',
+            background: 'var(--surface-glass)',
+            backdropFilter: 'blur(20px) saturate(140%)',
+            WebkitBackdropFilter: 'blur(20px) saturate(140%)',
             borderRadius: 'var(--radius-md)',
-            border: '1px solid var(--border-subtle)',
+            border: '1px solid var(--border-glass)',
             padding: '8px',
             height: 'fit-content',
             display: 'flex',
             flexDirection: 'column',
-            gap: '2px',
+            gap: '3px',
+            boxShadow: 'var(--shadow-glass)',
           }}
         >
           <button
@@ -234,11 +246,182 @@ export const SettingsPage: React.FC = () => {
                   </div>
                 </div>
 
+                {/* Appearance & Interface Theme Preference */}
+                <div className="form-group">
+                  <label className="form-label">Interface Theme & Appearance</label>
+                  <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '12px', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      className={`theme-select-card ${theme === 'dark' ? 'active' : ''}`}
+                      onClick={() => setTheme('dark')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '14px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: theme === 'dark' ? 'var(--accent-soft)' : 'var(--surface-glass-nested)',
+                        border: `1px solid ${theme === 'dark' ? 'var(--accent)' : 'var(--border-glass)'}`,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all var(--transition-fast)',
+                      }}
+                    >
+                      <div 
+                        style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          borderRadius: '8px', 
+                          background: '#0D0814', 
+                          border: '1px solid rgba(139, 92, 246, 0.3)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#A78BFA',
+                        }}
+                      >
+                        <Moon size={16} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>Dark Theme</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Obsidian & Liquid Monochrome Metal</div>
+                      </div>
+                    </button>
+
+                    <button
+                      type="button"
+                      className={`theme-select-card ${theme === 'light' ? 'active' : ''}`}
+                      onClick={() => setTheme('light')}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: '12px',
+                        padding: '14px',
+                        borderRadius: 'var(--radius-sm)',
+                        background: theme === 'light' ? 'var(--accent-soft)' : 'var(--surface-glass-nested)',
+                        border: `1px solid ${theme === 'light' ? 'var(--accent)' : 'var(--border-glass)'}`,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                        transition: 'all var(--transition-fast)',
+                      }}
+                    >
+                      <div 
+                        style={{ 
+                          width: '32px', 
+                          height: '32px', 
+                          borderRadius: '8px', 
+                          background: '#F5F5FA', 
+                          border: '1px solid rgba(124, 58, 237, 0.2)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'center',
+                          color: '#7C3AED',
+                        }}
+                      >
+                        <Sun size={16} />
+                      </div>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '13px', color: 'var(--text-primary)' }}>Light Theme</div>
+                        <div style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Pristine Off-White & Dunes (Default)</div>
+                      </div>
+                    </button>
+                  </div>
+                </div>
+
+                {/* Cloudee AI Mascot & Assistant Configuration */}
+                <div className="form-group" style={{ marginTop: '20px' }}>
+                  <label className="form-label" style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <Sparkles size={14} /> Cloudee AI Mascot & Assistant
+                  </label>
+                  <div
+                    style={{
+                      background: 'var(--surface-glass-nested)',
+                      border: '1px solid var(--border-glass)',
+                      borderRadius: 'var(--radius-md)',
+                      padding: '18px',
+                      display: 'flex',
+                      flexDirection: 'column',
+                      gap: '14px',
+                    }}
+                  >
+                    <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', gap: '16px' }}>
+                      <div>
+                        <div style={{ fontWeight: 600, fontSize: '14px', color: 'var(--text-primary)', marginBottom: '3px' }}>
+                          Enable Cloudee Interactive Companion
+                        </div>
+                        <div style={{ fontSize: '12px', color: 'var(--text-muted)', lineHeight: 1.4, maxWidth: '480px' }}>
+                          Custom interactive hiring companion with 14 controlled vector expressions, contextual shortcuts, and real-time reactions to your hiring workflow.
+                        </div>
+                      </div>
+                      <CloudeeToggle
+                        enabled={cloudeeEnabled}
+                        onToggle={setCloudeeEnabled}
+                        id="settings-cloudee-switch"
+                      />
+                    </div>
+
+                    {cloudeeEnabled && (
+                      <div
+                        style={{
+                          borderTop: '1px solid var(--border-glass-subtle)',
+                          paddingTop: '12px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          justifyContent: 'space-between',
+                          flexWrap: 'wrap',
+                          gap: '10px',
+                        }}
+                      >
+                        <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                          Preview Cloudee reactions:
+                        </span>
+                        <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => cloudeeEmit('MASCOT_CLICK')}
+                          >
+                            Happy
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => cloudeeEmit('SEARCH_TYPING')}
+                          >
+                            Thinking
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => cloudeeEmit('CANDIDATE_ADD_SUCCESS', { data: { name: 'Elena Rostova' } })}
+                          >
+                            Excited / Success
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => cloudeeEmit('MASCOT_HOVER')}
+                          >
+                            Curious
+                          </button>
+                          <button
+                            type="button"
+                            className="btn btn-secondary btn-sm"
+                            onClick={() => cloudeeEmit('CANDIDATE_ADD_FAIL')}
+                          >
+                            Concerned
+                          </button>
+                        </div>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
                 {/* Storage Architecture Info */}
                 <div
                   style={{
-                    backgroundColor: 'var(--bg-subtle)',
-                    border: '1px solid var(--border-subtle)',
+                    background: 'var(--surface-glass-nested)',
+                    border: '1px solid var(--border-glass)',
                     borderRadius: 'var(--radius-sm)',
                     padding: '14px',
                     display: 'flex',
@@ -246,7 +429,7 @@ export const SettingsPage: React.FC = () => {
                     gap: '10px',
                   }}
                 >
-                  <Database size={18} color="var(--indigo-600)" style={{ marginTop: '2px' }} />
+                  <Database size={18} color="var(--accent)" style={{ marginTop: '2px' }} />
                   <div>
                     <h4 style={{ fontSize: '13px', fontWeight: 600, color: 'var(--text-primary)', marginBottom: '2px' }}>
                       Persistence Mode: {storageMode === 'supabase' ? 'Supabase PostgreSQL (Primary Source of Truth)' : 'LocalStorage Fallback (Demo Mode)'}
@@ -320,12 +503,13 @@ export const SettingsPage: React.FC = () => {
                           <span
                             className="badge"
                             style={{
-                              backgroundColor: member.permission === 'Admin' ? 'var(--indigo-50)' : 'var(--bg-subtle)',
-                              color: member.permission === 'Admin' ? 'var(--indigo-600)' : 'var(--text-secondary)',
-                              padding: '2px 6px',
-                              borderRadius: '4px',
+                              backgroundColor: member.permission === 'Admin' ? 'var(--accent-soft)' : 'rgba(255, 255, 255, 0.6)',
+                              color: member.permission === 'Admin' ? 'var(--accent)' : 'var(--text-secondary)',
+                              padding: '2px 8px',
+                              borderRadius: '6px',
                               fontSize: '11px',
                               fontWeight: 600,
+                              border: '1px solid rgba(112, 119, 137, 0.15)',
                             }}
                           >
                             {member.permission}
@@ -390,7 +574,7 @@ export const SettingsPage: React.FC = () => {
           {activeTab === 'notifications' && (
             <div className="panel-body" style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <ShieldCheck size={20} color="var(--indigo-600)" />
+                <ShieldCheck size={20} color="var(--accent)" />
                 <div>
                   <h4 style={{ fontSize: '14px', fontWeight: 600 }}>Automated Candidate Notifications</h4>
                   <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Send instant Slack and email updates when candidates progress</p>

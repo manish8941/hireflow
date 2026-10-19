@@ -13,7 +13,7 @@ export const PipelineVisual: React.FC = () => {
     <div className="panel-card">
       <div className="panel-header">
         <div className="panel-title">
-          <GitCommit size={16} className="text-indigo" />
+          <GitCommit size={16} color="var(--accent)" />
           <span>Candidate Pipeline</span>
         </div>
         <button 

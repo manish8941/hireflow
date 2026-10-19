@@ -15,14 +15,14 @@ export const Avatar: React.FC<AvatarProps> = ({ name, size = 32, className = '' 
     .map(part => part[0].toUpperCase())
     .join('');
 
-  // Stable color based on name string
+  // Stable color based on name string (Apple macOS refined palette)
   const colors = [
-    { bg: '#eef2ff', text: '#4338ca', border: '#c7d2fe' },
-    { bg: '#eff6ff', text: '#1d4ed8', border: '#bfdbfe' },
-    { bg: '#f0fdf4', text: '#15803d', border: '#bbf7d0' },
-    { bg: '#faf5ff', text: '#7e22ce', border: '#e9d5ff' },
-    { bg: '#fff7ed', text: '#c2410c', border: '#fed7aa' },
-    { bg: '#fdf2f8', text: '#be185d', border: '#fbcfe8' },
+    { bg: 'rgba(84, 120, 184, 0.12)', text: '#3E5F97', border: 'rgba(84, 120, 184, 0.25)' },
+    { bg: 'rgba(112, 119, 137, 0.12)', text: '#4B5061', border: 'rgba(112, 119, 137, 0.22)' },
+    { bg: 'rgba(57, 134, 106, 0.12)', text: '#265D49', border: 'rgba(57, 134, 106, 0.24)' },
+    { bg: 'rgba(78, 127, 184, 0.12)', text: '#365D8A', border: 'rgba(78, 127, 184, 0.24)' },
+    { bg: 'rgba(181, 138, 69, 0.12)', text: '#7D5B23', border: 'rgba(181, 138, 69, 0.24)' },
+    { bg: 'rgba(128, 90, 140, 0.12)', text: '#5D3C6A', border: 'rgba(128, 90, 140, 0.22)' },
   ];
 
   let hash = 0;

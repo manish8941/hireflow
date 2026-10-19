@@ -12,6 +12,7 @@ import {
 } from '../types/ats';
 import { INITIAL_NOTIFICATIONS, STAGE_CONFIG } from '../data/mockCandidates';
 import { candidateStorage } from '../services/candidateStorage';
+import { cloudeeEmit } from '../mascot/cloudeeEvents';
 
 interface ATSContextType {
   candidates: Candidate[];
@@ -63,11 +64,25 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
   const [selectedStageFilter, setSelectedStageFilter] = useState<string>('all');
   
   // Modals & Selection States
-  const [isAddModalOpen, setIsAddModalOpen] = useState(false);
-  const [selectedCandidate, setSelectedCandidate] = useState<Candidate | null>(null);
+  const [isAddModalOpen, setIsAddModalOpenState] = useState(false);
+  const [selectedCandidate, setSelectedCandidateState] = useState<Candidate | null>(null);
   const [candidateToEdit, setCandidateToEdit] = useState<Candidate | null>(null);
   const [candidateToDelete, setCandidateToDelete] = useState<Candidate | null>(null);
   
+  const setIsAddModalOpen = useCallback((open: boolean) => {
+    setIsAddModalOpenState(open);
+    if (open) {
+      cloudeeEmit('CANDIDATE_ADD_START');
+    }
+  }, []);
+
+  const setSelectedCandidate = useCallback((candidate: Candidate | null) => {
+    setSelectedCandidateState(candidate);
+    if (candidate) {
+      cloudeeEmit('CANDIDATE_VIEW', { data: { name: candidate.name } });
+    }
+  }, []);
+
   // Notifications
   const [notifications, setNotifications] = useState<NotificationItem[]>(INITIAL_NOTIFICATIONS);
 
@@ -84,6 +99,7 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         if (mounted) {
           setCandidates(data);
           setStorageMode(candidateStorage.getStorageInfo().mode);
+          cloudeeEmit('APP_LOAD');
         }
       } catch (err: unknown) {
         console.error('[HireFlow] Failed to load candidates from storage:', err);
@@ -120,10 +136,14 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'application',
       };
       setNotifications(prev => [newNotif, ...prev]);
+      
+      // Cloudee Mascot reaction
+      cloudeeEmit('CANDIDATE_ADD_SUCCESS', { data: { name: created.name } });
       return created;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to add candidate to database';
       setError(msg);
+      cloudeeEmit('CANDIDATE_ADD_FAIL', { data: { error: msg } });
       throw err;
     } finally {
       setIsSaving(false);
@@ -139,7 +159,7 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCandidates(prev => prev.map(c => c.id === id ? updated : c));
 
       // Sync if selectedCandidate is open
-      setSelectedCandidate(prev => prev && prev.id === id ? updated : prev);
+      setSelectedCandidateState(prev => prev && prev.id === id ? updated : prev);
 
       // Add notification
       const newNotif: NotificationItem = {
@@ -151,6 +171,9 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'application',
       };
       setNotifications(prev => [newNotif, ...prev]);
+      
+      // Cloudee Mascot reaction
+      cloudeeEmit('CANDIDATE_UPDATE_SUCCESS', { data: { name: updated.name } });
       return updated;
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to update candidate in database';
@@ -170,7 +193,7 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       setCandidates(prev => prev.map(c => c.id === candidateId ? updated : c));
 
       // Sync selectedCandidate if open
-      setSelectedCandidate(prev => prev && prev.id === candidateId ? updated : prev);
+      setSelectedCandidateState(prev => prev && prev.id === candidateId ? updated : prev);
 
       // Add notification
       const newNotif: NotificationItem = {
@@ -182,6 +205,11 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
         type: 'interview',
       };
       setNotifications(prev => [newNotif, ...prev]);
+
+      // Cloudee Mascot reaction
+      cloudeeEmit('CANDIDATE_STAGE_CHANGE', {
+        data: { summary: `${updated.name} advanced to ${STAGE_CONFIG[newStage]?.label || newStage}` },
+      });
     } catch (err: unknown) {
       const msg = err instanceof Error ? err.message : 'Failed to update candidate stage in database';
       setError(msg);
@@ -196,12 +224,16 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     setIsSaving(true);
     setError(null);
     try {
+      const targetCandidate = candidates.find(c => c.id === candidateId);
       const deleted = await candidateStorage.delete(candidateId);
       if (deleted) {
         setCandidates(prev => prev.filter(c => c.id !== candidateId));
         if (selectedCandidate?.id === candidateId) {
-          setSelectedCandidate(null);
+          setSelectedCandidateState(null);
         }
+        cloudeeEmit('CANDIDATE_DELETE_SUCCESS', {
+          data: { name: targetCandidate?.name || 'Candidate' },
+        });
       }
       return deleted;
     } catch (err: unknown) {
@@ -211,7 +243,7 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsSaving(false);
     }
-  }, [selectedCandidate]);
+  }, [candidates, selectedCandidate]);
 
   const confirmDeleteCandidate = useCallback((candidate: Candidate) => {
     setCandidateToDelete(candidate);
@@ -243,7 +275,7 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
     } finally {
       setIsSaving(false);
     }
-  }, []);
+  }, [setSelectedCandidate]);
 
   // Notification actions
   const markNotificationAsRead = useCallback((id: string) => {
@@ -274,6 +306,24 @@ export const ATSProvider: React.FC<{ children: React.ReactNode }> = ({ children 
       return matchesSearch && matchesStage;
     });
   }, [candidates, searchQuery, selectedStageFilter]);
+
+  // Context-aware Cloudee reactions for search operations
+  useEffect(() => {
+    const trimmed = searchQuery.trim();
+    if (!trimmed) return;
+
+    cloudeeEmit('SEARCH_TYPING', { data: { query: trimmed } });
+
+    const timer = setTimeout(() => {
+      if (filteredCandidates.length > 0) {
+        cloudeeEmit('SEARCH_RESULTS', { data: { count: filteredCandidates.length } });
+      } else {
+        cloudeeEmit('SEARCH_EMPTY');
+      }
+    }, 450);
+
+    return () => clearTimeout(timer);
+  }, [searchQuery, filteredCandidates.length]);
 
   // Dynamic KPI Metrics derived directly from candidate records
   const kpiData = useMemo<KPICardData[]>(() => {

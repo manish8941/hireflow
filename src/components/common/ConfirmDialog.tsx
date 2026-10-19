@@ -49,8 +49,8 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
                   width: '28px',
                   height: '28px',
                   borderRadius: '50%',
-                  backgroundColor: '#fee2e2',
-                  color: '#dc2626',
+                  backgroundColor: 'rgba(198, 93, 99, 0.12)',
+                  color: 'var(--danger)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -90,7 +90,7 @@ export const ConfirmDialog: React.FC<ConfirmDialogProps> = ({
           <button
             type="button"
             className={isDestructive ? 'btn btn-danger' : 'btn btn-primary'}
-            style={isDestructive ? { backgroundColor: '#dc2626', color: '#ffffff', borderColor: '#dc2626' } : {}}
+            style={isDestructive ? { backgroundColor: 'var(--danger)', color: '#ffffff', borderColor: 'var(--danger)' } : {}}
             onClick={onConfirm}
           >
             {confirmLabel}

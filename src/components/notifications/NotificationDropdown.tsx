@@ -28,13 +28,13 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
   const getIcon = (type: string) => {
     switch (type) {
       case 'interview':
-        return <Calendar size={14} color="#6366f1" />;
+        return <Calendar size={14} color="var(--accent)" />;
       case 'application':
-        return <UserPlus size={14} color="#3b82f6" />;
+        return <UserPlus size={14} color="#4E7FB8" />;
       case 'hire':
-        return <CheckCircle2 size={14} color="#10b981" />;
+        return <CheckCircle2 size={14} color="var(--success)" />;
       default:
-        return <Clock size={14} color="#f59e0b" />;
+        return <Clock size={14} color="var(--warning)" />;
     }
   };
 
@@ -42,7 +42,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
     <div className="notification-popover" ref={dropdownRef}>
       <div className="notification-header">
         <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <Bell size={15} />
+          <Bell size={15} color="var(--accent)" />
           <h4>Notifications</h4>
         </div>
         <button
@@ -81,7 +81,7 @@ export const NotificationDropdown: React.FC<NotificationDropdownProps> = ({ isOp
                       width: '6px',
                       height: '6px',
                       borderRadius: '50%',
-                      backgroundColor: 'var(--indigo-600)',
+                      backgroundColor: 'var(--accent)',
                       marginTop: '6px',
                     }}
                   />

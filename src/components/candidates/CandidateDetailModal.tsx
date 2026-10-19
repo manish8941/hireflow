@@ -85,7 +85,10 @@ export const CandidateDetailModal: React.FC = () => {
             display: 'grid', 
             gridTemplateColumns: 'repeat(2, 1fr)', 
             gap: '12px',
-            backgroundColor: 'var(--bg-subtle)',
+            background: 'var(--surface-glass)',
+            backdropFilter: 'blur(16px)',
+            WebkitBackdropFilter: 'blur(16px)',
+            border: '1px solid var(--border-glass)',
             padding: '14px',
             borderRadius: 'var(--radius-sm)',
             fontSize: '12.5px'
@@ -121,7 +124,7 @@ export const CandidateDetailModal: React.FC = () => {
         {/* Change Stage Selector */}
         <div className="form-group">
           <label className="form-label" style={{ fontWeight: 600 }}>
-            Current Pipeline Stage {isSaving && <span style={{ fontSize: '11px', color: 'var(--indigo-600)', fontWeight: 400 }}>(Saving...)</span>}
+            Current Pipeline Stage {isSaving && <span style={{ fontSize: '11px', color: 'var(--accent)', fontWeight: 400 }}>(Saving...)</span>}
           </label>
           <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
             {(['applied', 'screening', 'interview', 'offer', 'hired', 'rejected'] as CandidateStage[]).map(stage => {

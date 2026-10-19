@@ -3,7 +3,7 @@ import { useATS } from '../../context/ATSContext';
 import { Database, RotateCcw, AlertCircle, X, CheckCircle2 } from 'lucide-react';
 
 export const DemoBanner: React.FC = () => {
-  const { storageMode, resetDemoData, isSaving, error, clearError } = useATS();
+  const { storageMode, resetDemoData, error, clearError } = useATS();
 
   const handleReset = async () => {
     if (window.confirm('Reset candidate pool back to initial demo dataset? Any added or edited candidates will be reverted.')) {
@@ -13,28 +13,36 @@ export const DemoBanner: React.FC = () => {
 
   return (
     <>
+      {/* Floating Error Toast if database error occurs */}
       {error && (
         <div
           role="alert"
+          className="editorial-error-toast"
           style={{
+            position: 'fixed',
+            top: '84px',
+            right: '24px',
+            zIndex: 1000,
             display: 'flex',
             alignItems: 'center',
-            justifyContent: 'space-between',
-            padding: '8px 16px',
-            backgroundColor: '#fef2f2',
-            borderBottom: '1px solid #fecaca',
+            gap: '10px',
+            padding: '10px 16px',
+            background: 'rgba(24, 24, 28, 0.94)',
+            backdropFilter: 'blur(20px)',
+            WebkitBackdropFilter: 'blur(20px)',
+            border: '1px solid rgba(239, 68, 68, 0.40)',
+            borderRadius: '12px',
+            color: '#FCA5A5',
             fontSize: '12px',
-            color: '#b91c1c',
+            boxShadow: '0 16px 36px rgba(0, 0, 0, 0.4)',
           }}
         >
-          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-            <AlertCircle size={15} color="#dc2626" />
-            <span><strong>Database Error:</strong> {error}</span>
-          </div>
+          <AlertCircle size={15} color="#EF4444" />
+          <span><strong>Error:</strong> {error}</span>
           <button
             type="button"
             onClick={clearError}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#b91c1c', padding: 2 }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: '#FCA5A5', padding: 2 }}
             title="Dismiss error"
           >
             <X size={14} />
@@ -42,45 +50,28 @@ export const DemoBanner: React.FC = () => {
         </div>
       )}
 
-      <div
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          padding: '6px 14px',
-          backgroundColor: storageMode === 'supabase' ? '#f0fdf4' : '#f8fafc',
-          borderBottom: '1px solid var(--border-subtle)',
-          fontSize: '11.5px',
-          color: storageMode === 'supabase' ? '#166534' : 'var(--text-secondary)',
-        }}
+      {/* Discrete Unobtrusive Utility Surface in bottom corner (No persistent top strip) */}
+      <div 
+        className="unobtrusive-storage-utility" 
+        role="complementary" 
+        aria-label="Storage status and demo data management"
       >
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div className="utility-storage-pill">
           {storageMode === 'supabase' ? (
-            <CheckCircle2 size={13} color="#16a34a" />
+            <CheckCircle2 size={11} className="utility-icon-connected" />
           ) : (
-            <Database size={13} color="var(--indigo-600)" />
+            <Database size={11} className="utility-icon-db" />
           )}
-          <span>
-            <strong>Storage:</strong>{' '}
-            {storageMode === 'supabase'
-              ? 'Supabase PostgreSQL (Primary Connected)'
-              : 'LocalStorage Fallback (Demo Mode)'}
-          </span>
-          <span style={{ color: 'var(--text-muted)' }}>•</span>
-          <span style={{ color: 'var(--text-muted)' }}>
-            {storageMode === 'supabase'
-              ? 'Multi-user cloud persistence across browsers'
-              : 'Local browser persistence (Set VITE_SUPABASE_URL to connect PostgreSQL)'}
+          <span className="utility-mode-text">
+            {storageMode === 'supabase' ? 'Supabase Connected' : 'LocalStorage Fallback'}
           </span>
         </div>
 
         <button
           type="button"
-          className="btn btn-ghost"
-          style={{ height: '22px', padding: '0 6px', fontSize: '11px', color: 'var(--text-secondary)' }}
+          className="utility-reset-btn"
           onClick={handleReset}
-          disabled={isSaving}
-          title="Reset candidate records back to initial mock dataset"
+          title="Reset candidate pool back to initial demo set"
         >
           <RotateCcw size={11} />
           <span>Reset Demo Data</span>

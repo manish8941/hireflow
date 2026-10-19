@@ -26,3 +26,8 @@ dist-ssr
 *.njsproj
 *.sln
 *.sw?
+
+# Test artifacts and screenshots
+*.png
+!public/**
+preview_*.html
