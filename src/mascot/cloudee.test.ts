@@ -2,7 +2,7 @@ import { describe, it } from 'node:test';
 import assert from 'node:assert/strict';
 import avatarData from './cloudee.avatar.json';
 import { CloudeeAvatarDefinition } from './cloudee.types';
-import { mapEventToReaction } from './cloudeeController';
+import { mapEventToReaction, getEventPriority } from './cloudeeController';
 import { cloudeeBus, cloudeeEmit } from './cloudeeEvents';
 import { MASCOT_BODY_PATH, MascotExpression } from './MascotFace';
 
@@ -202,5 +202,82 @@ describe('Cloudee Event Bus', () => {
     receivedType = null;
     cloudeeEmit('ROUTE_SETTINGS');
     assert.equal(receivedType, null);
+  });
+});
+
+describe('Living Mascot Interaction & Priority Controller', () => {
+  it('enforces 5-tier behavior hierarchy', () => {
+    // 5 = Error / Critical Feedback
+    assert.equal(getEventPriority('CANDIDATE_ADD_FAIL'), 5);
+    assert.equal(getEventPriority('DATABASE_ERROR'), 5);
+
+    // 3 = Direct user interaction
+    assert.equal(getEventPriority('MASCOT_CLICK'), 3);
+    assert.equal(getEventPriority('MASCOT_HOVER'), 3);
+
+    // 2 = Contextual ATS events
+    assert.equal(getEventPriority('CANDIDATE_ADD_SUCCESS'), 2);
+    assert.equal(getEventPriority('CANDIDATE_UPDATE_SUCCESS'), 2);
+    assert.equal(getEventPriority('CANDIDATE_DELETE_SUCCESS'), 2);
+    assert.equal(getEventPriority('CANDIDATE_STAGE_CHANGE'), 2);
+    assert.equal(getEventPriority('SEARCH_TYPING'), 2);
+    assert.equal(getEventPriority('SEARCH_RESULTS'), 2);
+    assert.equal(getEventPriority('DATA_LOADING'), 2);
+    assert.equal(getEventPriority('THEME_CHANGE'), 2);
+
+    // 1 = Baseline Idle / Route states
+    assert.equal(getEventPriority('ROUTE_DASHBOARD'), 1);
+    assert.equal(getEventPriority('ROUTE_CANDIDATES'), 1);
+    assert.equal(getEventPriority('ROUTE_PIPELINE'), 1);
+    assert.equal(getEventPriority('ROUTE_SETTINGS'), 1);
+    assert.equal(getEventPriority('APP_LOAD'), 1);
+    assert.equal(getEventPriority('IDLE_TIMEOUT'), 1);
+  });
+
+  it('maps DATA_LOADING and DATABASE_ERROR to working and error states', () => {
+    const loadingState = mapEventToReaction({ type: 'DATA_LOADING' });
+    assert.equal(loadingState.expression, 'working');
+    assert.equal(loadingState.transient, true);
+
+    const dbErrorState = mapEventToReaction({
+      type: 'DATABASE_ERROR',
+      data: { error: 'Network timeout' },
+    });
+    assert.equal(dbErrorState.expression, 'error');
+    assert.equal(dbErrorState.transient, true);
+    assert.match(dbErrorState.subMessage!, /Network timeout/i);
+  });
+
+  it('safely clamps cursor glance within facial boundaries (max ±4.5px X, ±3.5px Y)', () => {
+    const maxGlanceX = 4.5;
+    const maxGlanceY = 3.5;
+    const glanceRadius = 420;
+
+    const clampGlance = (deltaX: number, deltaY: number) => {
+      const distance = Math.hypot(deltaX, deltaY);
+      if (distance >= glanceRadius || distance <= 6) {
+        return { glanceX: 0, glanceY: 0 };
+      }
+      const factor = Math.min(1, Math.max(0, 1 - distance / glanceRadius));
+      return {
+        glanceX: (deltaX / distance) * maxGlanceX * factor,
+        glanceY: (deltaY / distance) * maxGlanceY * factor,
+      };
+    };
+
+    // Extreme pointer offset (e.g., 200px right, 200px down)
+    const glance1 = clampGlance(200, 200);
+    assert.ok(Math.abs(glance1.glanceX) <= 4.5);
+    assert.ok(Math.abs(glance1.glanceY) <= 3.5);
+
+    // Pointer far away (> 420px) returns strictly 0
+    const glanceFar = clampGlance(500, 500);
+    assert.equal(glanceFar.glanceX, 0);
+    assert.equal(glanceFar.glanceY, 0);
+
+    // Pointer right on mascot (<= 6px) returns 0
+    const glanceClose = clampGlance(2, 2);
+    assert.equal(glanceClose.glanceX, 0);
+    assert.equal(glanceClose.glanceY, 0);
   });
 });

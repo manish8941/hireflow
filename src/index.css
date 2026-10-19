@@ -2432,7 +2432,7 @@ select.filter-select {
 }
 
 .cloudee-mascot-btn:hover {
-  transform: scale(1.08) translateY(-3px);
+  transform: translateY(-2px);
 }
 
 .cloudee-mascot-btn:active {
@@ -2457,8 +2457,59 @@ select.filter-select {
   transition: transform 220ms cubic-bezier(0.16, 1, 0.3, 1);
 }
 
-.cloudee-mascot-btn:hover .cloudee-vector-wrapper {
-  transform: translateY(-3px) scale(1.05);
+.cloudee-mascot-btn:hover .cloudee-vector-wrapper:not(.is-bouncing) {
+  transform: scale(1.05);
+}
+
+/* Continuous Idle Float */
+.cloudee-vector-wrapper.is-idle {
+  animation: cloudeeIdleFloat 3.8s ease-in-out infinite;
+}
+
+@keyframes cloudeeIdleFloat {
+  0%, 100% {
+    transform: translateY(0px);
+  }
+  50% {
+    transform: translateY(-4.5px);
+  }
+}
+
+/* Continuous Soft Breathing on Mascot Head */
+.cloudee-vector-wrapper.is-idle .mascot-face-head {
+  animation: cloudeeSoftBreathing 3.8s ease-in-out infinite;
+}
+
+@keyframes cloudeeSoftBreathing {
+  0%, 100% {
+    transform: scale(1, 1);
+  }
+  50% {
+    transform: scale(1.018, 1.012);
+  }
+}
+
+/* Playful Click / Tap Bounce */
+.cloudee-vector-wrapper.is-bouncing {
+  animation: cloudeeCuteBounce 520ms cubic-bezier(0.28, 0.84, 0.42, 1);
+}
+
+@keyframes cloudeeCuteBounce {
+  0% {
+    transform: translateY(0) scale(1, 1);
+  }
+  24% {
+    transform: translateY(-8px) scale(1.06, 0.94);
+  }
+  48% {
+    transform: translateY(2px) scale(0.96, 1.03);
+  }
+  72% {
+    transform: translateY(-3px) scale(1.02, 0.98);
+  }
+  100% {
+    transform: translateY(0) scale(1, 1);
+  }
 }
 
 .mascot-face-svg {
@@ -2484,6 +2535,23 @@ select.filter-select {
   border-radius: 50%;
   z-index: 1;
   pointer-events: none;
+  transition: transform 220ms ease, opacity 220ms ease;
+}
+
+/* Synchronized Ambient Ground Shadow Pulse */
+.cloudee-mascot-halo.is-idle {
+  animation: cloudeeHaloPulse 3.8s ease-in-out infinite;
+}
+
+@keyframes cloudeeHaloPulse {
+  0%, 100% {
+    transform: scale(1);
+    opacity: 0.22;
+  }
+  50% {
+    transform: scale(0.9);
+    opacity: 0.14;
+  }
 }
 
 /* Collapsed Switch Pill when Cloudee is disabled */
@@ -2860,6 +2928,11 @@ select.filter-select {
   .mascot-face-svg path,
   .cloudee-mascot-btn,
   .cloudee-vector-wrapper,
+  .cloudee-vector-wrapper.is-idle,
+  .cloudee-vector-wrapper.is-bouncing,
+  .cloudee-vector-wrapper.is-idle .mascot-face-head,
+  .cloudee-mascot-halo,
+  .cloudee-mascot-halo.is-idle,
   .cloudee-helper-panel,
   .cloudee-transient-bubble,
   .cloudee-switch-thumb {

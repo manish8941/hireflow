@@ -26,6 +26,34 @@ export const DEFAULT_CLOUDEE_STATE: CloudeeControllerState = {
   transient: false,
 };
 
+export const EVENT_PRIORITY: Record<CloudeeEventType, number> = {
+  DATABASE_ERROR: 5,           // Highest: critical errors
+  CANDIDATE_ADD_FAIL: 5,       // Highest: critical validation/submit error
+  MASCOT_CLICK: 3,             // Direct user interaction
+  MASCOT_HOVER: 3,             // Direct pointer hover
+  DATA_LOADING: 2,             // Operational state
+  CANDIDATE_ADD_SUCCESS: 2,    // Contextual application event
+  CANDIDATE_UPDATE_SUCCESS: 2,
+  CANDIDATE_DELETE_SUCCESS: 2,
+  CANDIDATE_STAGE_CHANGE: 2,
+  SEARCH_TYPING: 2,
+  SEARCH_RESULTS: 2,
+  SEARCH_EMPTY: 2,
+  THEME_CHANGE: 2,
+  CANDIDATE_VIEW: 2,
+  CANDIDATE_ADD_START: 2,
+  ROUTE_DASHBOARD: 1,          // Baseline route states
+  ROUTE_CANDIDATES: 1,
+  ROUTE_PIPELINE: 1,
+  ROUTE_SETTINGS: 1,
+  APP_LOAD: 1,
+  IDLE_TIMEOUT: 1,
+};
+
+export const getEventPriority = (type: CloudeeEventType): number => {
+  return EVENT_PRIORITY[type] ?? 1;
+};
+
 export function mapEventToReaction(
   payload: CloudeeEventPayload,
   currentRoute = 'dashboard'
@@ -228,6 +256,28 @@ export function mapEventToReaction(
         message: 'A fresh look!',
         subMessage: `Switched to ${(payload.data?.theme as string) || 'new'} theme.`,
         lastEventType: 'THEME_CHANGE',
+        transient: true,
+      };
+
+    case 'DATA_LOADING':
+      return {
+        expression: 'working',
+        animation: 'working',
+        expressionOverride: 'attentive-left',
+        message: 'Syncing with the database...',
+        subMessage: (payload.data?.message as string) || 'Loading candidates and recruitment metrics.',
+        lastEventType: 'DATA_LOADING',
+        transient: true,
+      };
+
+    case 'DATABASE_ERROR':
+      return {
+        expression: 'error',
+        animation: 'confused',
+        expressionOverride: 'skeptical-left',
+        message: 'Database connection issue.',
+        subMessage: (payload.data?.error as string) || 'Check your network or credentials.',
+        lastEventType: 'DATABASE_ERROR',
         transient: true,
       };
 

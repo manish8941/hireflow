@@ -167,6 +167,8 @@ export type CloudeeEventType =
   | 'CANDIDATE_DELETE_SUCCESS'
   | 'CANDIDATE_STAGE_CHANGE'
   | 'THEME_CHANGE'
+  | 'DATA_LOADING'
+  | 'DATABASE_ERROR'
   | 'IDLE_TIMEOUT';
 
 export interface CloudeeEventPayload {

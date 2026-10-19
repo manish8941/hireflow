@@ -1,12 +1,13 @@
 import { useState, useEffect, useCallback } from 'react';
 
-const CLOUDEE_ENABLED_KEY = 'hireflow_cloudee_enabled';
+const MASCOT_ENABLED_KEY = 'hireflow_mascot_enabled';
+const LEGACY_CLOUDEE_ENABLED_KEY = 'hireflow_cloudee_enabled';
 const CLOUDEE_STORAGE_EVENT = 'hireflow_cloudee_toggle';
 
 export const isCloudeeEnabled = (): boolean => {
   try {
     if (typeof window === 'undefined') return true;
-    const stored = localStorage.getItem(CLOUDEE_ENABLED_KEY);
+    const stored = localStorage.getItem(MASCOT_ENABLED_KEY) ?? localStorage.getItem(LEGACY_CLOUDEE_ENABLED_KEY);
     if (stored === null) return true;
     return stored === 'true';
   } catch {
@@ -16,7 +17,8 @@ export const isCloudeeEnabled = (): boolean => {
 
 export const setCloudeeEnabled = (enabled: boolean): void => {
   try {
-    localStorage.setItem(CLOUDEE_ENABLED_KEY, String(enabled));
+    localStorage.setItem(MASCOT_ENABLED_KEY, String(enabled));
+    localStorage.setItem(LEGACY_CLOUDEE_ENABLED_KEY, String(enabled));
     window.dispatchEvent(new CustomEvent(CLOUDEE_STORAGE_EVENT, { detail: { enabled } }));
   } catch {
     // Ignore storage errors in restricted contexts

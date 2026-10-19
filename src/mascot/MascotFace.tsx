@@ -22,6 +22,7 @@ export interface MascotFaceProps {
   className?: string;
   ariaLabel?: string;
   isAnimated?: boolean;
+  isBlinking?: boolean;
 }
 
 // Continuous, mathematically balanced silhouette matching Reference A
@@ -161,12 +162,28 @@ export const MascotFace: React.FC<MascotFaceProps> = ({
   className = '',
   ariaLabel,
   isAnimated = true,
+  isBlinking = false,
 }) => {
   const currentExp = EXPRESSIONS[expression] || EXPRESSIONS.neutral;
+  const canBlink = !currentExp.customEyes && expression !== 'sleepy';
+  const shouldBlink = isBlinking && canBlink;
+
   const headStyle: React.CSSProperties = {
     transform: currentExp.headTransform || 'none',
     transformOrigin: '120px 120px',
     transition: isAnimated ? 'transform 0.3s cubic-bezier(0.2, 0.8, 0.2, 1)' : 'none',
+  };
+
+  const eyesGroupStyle: React.CSSProperties = {
+    transform: `translate(var(--eye-glance-x, 0px), var(--eye-glance-y, 0px)) ${
+      shouldBlink ? 'scaleY(0.08)' : 'scaleY(1)'
+    }`,
+    transformOrigin: '120px 125px',
+    transition: shouldBlink
+      ? 'transform 0.08s ease-out'
+      : isAnimated
+      ? 'transform 0.18s cubic-bezier(0.2, 0.8, 0.2, 1)'
+      : 'none',
   };
 
   return (
@@ -180,7 +197,7 @@ export const MascotFace: React.FC<MascotFaceProps> = ({
       aria-label={ariaLabel || `HireFlow Mascot (${expression})`}
       style={{ overflow: 'visible', display: 'block' }}
     >
-      <g style={headStyle}>
+      <g className="mascot-face-head" style={headStyle}>
         {/* Flat, solid vivid orange body from Reference A (#FF4A0A) */}
         <path
           d={MASCOT_BODY_PATH}
@@ -188,8 +205,8 @@ export const MascotFace: React.FC<MascotFaceProps> = ({
           style={{ transition: 'fill 0.3s ease' }}
         />
 
-        {/* Eyes: Controlled, symmetric, clean white geometry */}
-        <g className="mascot-eyes-group">
+        {/* Eyes: Controlled, symmetric, clean white geometry with cursor glance and blink support */}
+        <g className="mascot-eyes-group" style={eyesGroupStyle}>
           {currentExp.customEyes ? (
             currentExp.customEyes
           ) : (
