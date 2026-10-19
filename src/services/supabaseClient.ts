@@ -9,8 +9,13 @@ const getEnvVar = (key: string): string => {
   } catch {
     // Fall back to process.env if available
   }
-  if (typeof process !== 'undefined' && process.env && process.env[key]) {
-    return String(process.env[key]);
+  try {
+    const proc = (globalThis as unknown as { process?: { env?: Record<string, string> } }).process;
+    if (proc?.env && proc.env[key]) {
+      return String(proc.env[key]);
+    }
+  } catch {
+    // Ignore in non-Node environments
   }
   return '';
 };
